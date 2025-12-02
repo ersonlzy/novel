@@ -1,0 +1,3 @@
+project_documents: 'knowledgebase/default/project_documents'
+context_documents: "knowledgebase/default/context_documents"
+knowledge_documents: 'knowledgebase/default/knowledge_documents'

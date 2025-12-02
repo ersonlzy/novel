@@ -1,0 +1,23 @@
+[project]
+name = "novel"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain-chroma>=1.0.0",
+    "langchain-classic>=1.0.0",
+    "langchain-cohere>=0.5.0",
+    "langchain-deepseek>=1.0.1",
+    "langchain-experimental>=0.4.0",
+    "langchain-ollama>=1.0.0",
+    "langchain-openai>=1.0.2",
+    "pypdf>=6.4.0",
+    "streamlit>=1.51.0",
+    "streamlit-modal>=0.1.2",
+    "watchdog>=6.0.0",
+]
+
+
+[tool.pyrefly]
+search_path = ["./"]
