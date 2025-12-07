@@ -4,7 +4,7 @@ from components.shorters import ContentShorter
 from rag.retrievers import Retriever
 from utils.tools import get_config
 from threading import Thread
-
+from langchain_core.exceptions import OutputParserException
 
 class Novel():
     def __init__(self, config_path, model=None, model_provoder=None, extractor_model=None, short_model=None, special_model_provider=None, model_kwargs={}):
@@ -87,7 +87,12 @@ class Novel():
                     "previous_content": previous_content,
                 }
                 inputs.update(gen_inputs)
-                res_content = self.novel_generator.invoke(inputs)
+                for i in range(3):
+                    try:
+                        res_content = self.novel_generator.invoke(inputs)
+                        break
+                    except OutputParserException as e:
+                        continue
                 bar.progress((progress * i * 5 + 25)/100)
                 yield res_content
         # except Exception as e:

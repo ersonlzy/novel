@@ -172,7 +172,10 @@ def confirm(opearation, confirm_word, callback_fn):
 def get_model_list(model_provider:str):
     base_url = os.getenv(f"{model_provider.upper()}_BASE_URL")
     api_key = os.getenv(f"{model_provider.upper()}_API_KEY")
-    url = f"{base_url}/models"
+    if model_provider.upper() == "OLLAMA":
+        url = f"{base_url}/v1/models"
+    else:
+        url = f"{base_url}/models"
     querystring = {"type":"text","sub_type":"chat"}
     headers = {"Authorization": f"Bearer {api_key}"}
     response = requests.get(url, headers=headers, params=querystring)

@@ -138,7 +138,7 @@ elif project:
                     file_bytes = file_uploaded.read()
                     with open(os.path.join(get_config(project).project_documents, file_uploaded.name), "wb") as f:
                         f.write(file_bytes)
-                st.info("文件已全部保存，请及时更新知识库")
+                st.info("文件已全部保存，请及时更新项目知识库")
             
             st.subheader("文件列表")
             display_file_list_with_delete(get_config(project).project_documents, "project_documents")
