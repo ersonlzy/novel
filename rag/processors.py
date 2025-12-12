@@ -2,6 +2,7 @@ from langchain_chroma import Chroma
 from langchain_classic.text_splitter import CharacterTextSplitter
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_classic.indexes import SQLRecordManager, index
+from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_community.document_loaders import TextLoader, PyPDFLoader, UnstructuredWordDocumentLoader, UnstructuredEPubLoader, UnstructuredMarkdownLoader
 import os
 from tqdm import tqdm
@@ -10,9 +11,10 @@ from tqdm import tqdm
 class DocumentProcessor():
     
     def __init__(self, knowledge_base_path):
-        self.embeddings = OpenAIEmbeddings(api_key=os.getenv("SILICONFLOW_API_KEY"), 
-                                           base_url=os.getenv("SILICONFLOW_BASE_URL"), 
-                                           model="Qwen/Qwen3-Embedding-8B")
+        # self.embeddings = OpenAIEmbeddings(api_key=os.getenv("SILICONFLOW_API_KEY"), 
+        #                                    base_url=os.getenv("SILICONFLOW_BASE_URL"), 
+        #                                    model="Qwen/Qwen3-Embedding-8B")
+        self.embeddings = OllamaEmbeddings(model="qwen3-embedding", base_url=os.getenv("OLLAMA_BASE_URL"))
         
         self.collection_name = knowledge_base_path.split("/")[-1]
         self.project_name = knowledge_base_path.split("/")[0]
