@@ -28,5 +28,9 @@ EXPOSE 8501
 # Set environment variables
 ENV PATH="/app/.venv/bin:$PATH"
 
+RUN chmod 777 ./
+
+RUN mkdir .db
+
 # Run the application
 CMD ["uv", "run", "streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
