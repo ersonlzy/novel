@@ -49,6 +49,16 @@ class Novel():
             thread.start()
         for thread in threads:
             thread.join()
+        if "outline_settings" not in results:
+            results.update({"outline_settings": []})
+        if "character_settings" not in results:
+            results.update({"character_settings": []})
+        if "knowledge_context" not in results:
+            results.update({"knowledge_context": []})
+        if "previous_content" not in results:
+            results.update({"previous_content": []})
+        if "equipment_settings" not in results:
+            results.update({"equipment_settings": []})
         return results
 
     def generate_outlines(self, inputs:dict, bar):
