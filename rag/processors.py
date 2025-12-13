@@ -54,8 +54,12 @@ class DocumentProcessor():
             try:
                 result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
             except Exception as e:
-                self.chroma = Chroma.from_documents(all_contents, self.embeddings, persist_directory=f"../dbfiles/.vectordb/{self.knowledge_base_path}/", collection_name=self.collection_name )
-                result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
+                try:
+                    self.chroma = Chroma.from_documents(all_contents, self.embeddings, persist_directory=f"../dbfiles/.vectordb/{self.knowledge_base_path}/", collection_name=self.collection_name )
+                    result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
+                except Exception as e:
+                    self.chroma = Chroma.from_documents(all_contents, self.embeddings, persist_directory=f"../dbfiles/.vectordb/{self.knowledge_base_path}/", collection_name=self.collection_name )
+                    result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
             print(f"知识库更新成功\n新增知识块：{result['num_added']}\n删除知识块：{result['num_deleted']}\n更新知识块：{result['num_updated']}")
             print(f"Processor has persisted all documents in path {self.knowledge_base_path}")
             print(f"知识库{self.collection_name}处理成功")
