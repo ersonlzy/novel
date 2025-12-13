@@ -10,7 +10,7 @@ import requests
 
 def get_config(project, path=None):
     if not path:
-        config_path = os.path.join("./projects", f"{project}.yaml")
+        config_path = os.path.join("../dbfiles/projects", f"{project}.yaml")
     else:
         config_path = os.path.join(path, f"{project}.yaml")
     with open(config_path, "r", encoding="utf-8") as f:
@@ -20,7 +20,7 @@ def get_config(project, path=None):
 
 def get_projects(path=None):
     if not path:
-        path = "./projects"
+        path = "../dbfiles/projects"
     configs = [config.replace(".yaml", "") for config in os.listdir(path)]
     return configs
 
@@ -38,18 +38,18 @@ def get_documents_info(path):
 
 def create_new_project(project, pd="", cd="", kd=""):
     if pd == "":
-        pd = f"./knowledgebase/{project}/project_documents"
+        pd = f"../dbfiles/knowledgebase/{project}/project_documents"
     if cd == "":
-        cd = f"./knowledgebase/{project}/context_documents"
+        cd = f"../dbfiles/knowledgebase/{project}/context_documents"
     if kd == "":
-        kd = f"./knowledgebase/{project}/knowledge_documents"
+        kd = f"../dbfiles/knowledgebase/{project}/knowledge_documents"
 
     try:
-        os.mkdir(f"./knowledgebase/{project}")
+        os.mkdir(f"../dbfiles/knowledgebase/{project}")
     except FileExistsError:
         pass
     except Exception as e:
-        print(f"[ERROR] Encounter error {e} while create path ./knowledgebase/{project}")
+        print(f"[ERROR] Encounter error {e} while create path ../dbfiles/knowledgebase/{project}")
         return False
     
     try:
@@ -77,7 +77,7 @@ def create_new_project(project, pd="", cd="", kd=""):
         return False
     
     try:
-        with open(f"./projects/{project}.yaml", "w", encoding="utf-8") as f:
+        with open(f"../dbfiles/projects/{project}.yaml", "w", encoding="utf-8") as f:
             data = {
                     "project_documents": pd,
                     "context_documents": cd,
@@ -117,7 +117,7 @@ def delete_project(project):
         return False
     
     try:
-        shutil.rmtree(f"./knowledgebase/{project}", ignore_errors=True)
+        shutil.rmtree(f"../dbfiles/knowledgebase/{project}", ignore_errors=True)
     except FileNotFoundError:
         pass
     except Exception as e:
@@ -125,7 +125,7 @@ def delete_project(project):
         return False
     
     try:
-        shutil.rmtree(f"./.vectordb/{project}", ignore_errors=True)
+        shutil.rmtree(f"../dbfiles/.vectordb/{project}", ignore_errors=True)
     except FileNotFoundError:
         pass
     except Exception as e:
@@ -133,7 +133,7 @@ def delete_project(project):
         return False
 
     try:
-        os.remove(f"./projects/{project}.yaml")
+        os.remove(f"../dbfiles/projects/{project}.yaml")
     except FileNotFoundError:
         pass
     except Exception as e:
@@ -141,7 +141,7 @@ def delete_project(project):
         return False
 
     try:
-        os.remove(f"./.db/{project}_record_manager_cache.db")
+        os.remove(f"../dbfiles/.db/{project}_record_manager_cache.db")
     except FileNotFoundError:
         pass
     except Exception as e:

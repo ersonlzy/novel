@@ -15,15 +15,15 @@ class DocumentProcessor():
         
         self.collection_name = knowledge_base_path.split("/")[-1]
         self.project_name = knowledge_base_path.split("/")[0]
-        self.sql_url = f"sqlite:///.db/{self.project_name}_record_manager_cache.db"
+        self.sql_url = f"sqlite:///../dbfiles/.db/{self.project_name}_record_manager_cache.db"
         self.knowledge_base_path = knowledge_base_path
         self.documents_dir = knowledge_base_path
         self.record_manager = SQLRecordManager(self.collection_name, db_url=self.sql_url)
         self.record_manager.create_schema()
         
         try:
-            os.listdir(f"./.vectordb/{self.knowledge_base_path}")
-            self.chroma = Chroma(collection_name=self.collection_name, persist_directory=f"./.vectordb/{self.knowledge_base_path}/", embedding_function=self.embeddings)
+            os.listdir(f"../dbfiles/.vectordb/{self.knowledge_base_path}")
+            self.chroma = Chroma(collection_name=self.collection_name, persist_directory=f"../dbfiles/.vectordb/{self.knowledge_base_path}/", embedding_function=self.embeddings)
         except Exception:
             self.processing()
 
