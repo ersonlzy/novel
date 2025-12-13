@@ -14,7 +14,7 @@ class DocumentProcessor():
         self.embeddings = OllamaEmbeddings(model="qwen3-embedding:8b", base_url=os.getenv("OLLAMA_BASE_URL"))
         
         self.collection_name = knowledge_base_path.split("/")[-1]
-        self.project_name = knowledge_base_path.split("/")[1]
+        self.project_name = knowledge_base_path.split("/")[-2]
         self.sql_url = f"sqlite:///../dbfiles/.db/{self.project_name}_record_manager_cache.db"
         self.knowledge_base_path = knowledge_base_path
         self.documents_dir = knowledge_base_path
