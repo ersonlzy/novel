@@ -45,7 +45,7 @@ class DocumentProcessor():
                     elif document.endswith(".md"):
                         raw_contents = UnstructuredMarkdownLoader(document).load()
                     else:
-                        print("未支持的文件格式, 仅支持txt, pdf, docx, doc, epub, md格式的文件")
+                        st.toast("未支持的文件格式, 仅支持txt, pdf, docx, doc, epub, md格式的文件")
                     text_splitter = CharacterTextSplitter(separator="\n", chunk_size=200, chunk_overlap=20)
                     contents = text_splitter.split_documents(raw_contents)
                     all_contents.extend(contents)
