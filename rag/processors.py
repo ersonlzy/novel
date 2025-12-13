@@ -35,7 +35,7 @@ class DocumentProcessor():
                 raw_contents = []
                 try:
                     if document.endswith(".txt"):
-                        raw_contents = TextLoader(document).load()
+                        raw_contents = TextLoader(document, autodetect_encoding=True).load()
                     elif document.endswith(".pdf"):
                         raw_contents = PyPDFLoader(document).load()
                     elif document.endswith(".docx") or document.endswith(".doc"):
