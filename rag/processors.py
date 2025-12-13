@@ -6,7 +6,7 @@ from langchain_ollama.embeddings import OllamaEmbeddings
 from langchain_community.document_loaders import TextLoader, PyPDFLoader, UnstructuredWordDocumentLoader, UnstructuredEPubLoader, UnstructuredMarkdownLoader
 import os
 from tqdm import tqdm
-
+import streamlit as st
 
 class DocumentProcessor():
     
@@ -50,17 +50,23 @@ class DocumentProcessor():
                     contents = text_splitter.split_documents(raw_contents)
                     all_contents.extend(contents)
                 except Exception as e:
-                    print(f"Processing encounter error with file {document}\nplease check the file is valid and its format.\n[Error] {e}")
+                    st.toast(f"Processing encounter error with file {document}\nplease check the file is valid and its format.\n[Error] {e}")
             try:
                 result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
             except Exception as e:
-                self.chroma = Chroma.from_documents(all_contents, self.embeddings, persist_directory=f"../dbfiles/.vectordb/{self.knowledge_base_path}/", collection_name=self.collection_name )
-                result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
-            print(f"知识库更新成功\n新增知识块：{result['num_added']}\n删除知识块：{result['num_deleted']}\n更新知识块：{result['num_updated']}")
-            print(f"Processor has persisted all documents in path {self.knowledge_base_path}")
-            print(f"知识库{self.collection_name}处理成功")
+                try:
+                    self.chroma = Chroma.from_documents(all_contents, self.embeddings, persist_directory=f"../dbfiles/.vectordb/{self.knowledge_base_path}/", collection_name=self.collection_name )
+                    result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
+                    st.toast(f"知识库更新成功\n新增知识块：{result['num_added']}\n删除知识块：{result['num_deleted']}\n更新知识块：{result['num_updated']}")
+                    st.toast(f"Processor has persisted all documents in path {self.knowledge_base_path}")
+                    st.toast(f"知识库{self.collection_name}处理成功")
+                except Exception as e:
+                    st.toast(f"Processing encounter error with file {document}\nplease check the file is valid and its format.\n[Error] {e}")
+            # st.toast(f"知识库更新成功\n新增知识块：{result['num_added']}\n删除知识块：{result['num_deleted']}\n更新知识块：{result['num_updated']}")
+            # st.toast(f"Processor has persisted all documents in path {self.knowledge_base_path}")
+            # st.toast(f"知识库{self.collection_name}处理成功")
         else:
-            print(f"There is no any documents in path {self.knowledge_base_path}")
+            st.toast(f"There is no any documents in path {self.knowledge_base_path}")
 
     def get_Chroma(self) -> Chroma:
         return self.chroma
