@@ -1,3 +1,4 @@
+from httpcore import __name
 from components.generators import NovelGenerator, OutlinesGenerator
 from components.extractors import QueriesExtractor
 from components.shorters import ContentShorter
@@ -108,3 +109,5 @@ class Novel():
         # except Exception as e:
         #     print(f"Generate novel failed: {e}")
         #     yield False
+
+

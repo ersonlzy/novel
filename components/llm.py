@@ -1,6 +1,6 @@
 from langchain_core.exceptions import OutputParserException
 from langchain_classic.chat_models import init_chat_model
-from langchain_classic.output_parsers import StructuredOutputParser
+from langchain_classic.output_parsers import StructuredOutputParser, OutputFixingParser
 from langchain_classic.prompts import ChatPromptTemplate
 from langchain_ollama.llms import OllamaLLM
 import os
@@ -18,12 +18,14 @@ class LLM():
         ])
         if schemas:
             self.parser = StructuredOutputParser.from_response_schemas(schemas)
+            self.fixing_parser = OutputFixingParser.from_llm(self.llm, self.parser, max_retries=3)
         else:
             self.parser = None # type: ignore
+            self.fixing_parser = None # type: ignore
 
     def get_chain(self):
         if self.parser:
-            self.chain = self.template | self.llm | self.parser
+            self.chain = self.template | self.llm | self.fixing_parser
         else:
             self.chain = self.template | self.llm
             
@@ -65,5 +67,5 @@ class LLM():
             api_key=api_key, 
             disable_streaming=not stream, 
             **model_kwargs
-        )
+        ) 
 

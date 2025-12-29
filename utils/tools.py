@@ -169,19 +169,20 @@ def confirm(opearation, confirm_word, callback_fn):
             st.error('输入错误')
 
 
-def get_model_list(model_provider:str):
+def get_model_list(model_provider:str, type="text", sub_type="chat"):
     base_url = os.getenv(f"{model_provider.upper()}_BASE_URL")
     api_key = os.getenv(f"{model_provider.upper()}_API_KEY")
     if model_provider.upper() == "OLLAMA":
         url = f"{base_url}/v1/models"
     else:
         url = f"{base_url}/models"
-    querystring = {"type":"text","sub_type":"chat"}
+    querystring = {"type":type,"sub_type":sub_type}
     headers = {"Authorization": f"Bearer {api_key}"}
     response = requests.get(url, headers=headers, params=querystring)
     if response.status_code != 200:
         return False, f"[ERROR] Encounter error {response.status_code} while get model list"
     res = response.json()["data"]
+    print(res)
     model_list = []
     for data in res:
         if data["object"] == "model":
@@ -189,3 +190,19 @@ def get_model_list(model_provider:str):
         else:
             pass
     return True, model_list
+
+
+
+if __name__ == "__main__":
+    import os
+    os.environ["OLLAMA_BASE_URL"] = "http://localhost:11434"
+    os.environ["SILICONFLOW_BASE_URL"] = "https://api.siliconflow.cn/v1/"
+    os.environ["SILICONFLOW_API_KEY"] = "sk-cacgktvuvpkdltmjiycnzftyraprsimhislcspngyqlfshkg"
+    model_provider = "SiliconFlow"
+    type = "text"
+    sub_type = "embedding"
+    res = get_model_list(model_provider, type, sub_type)
+    if res[0]:
+        print(res[1])
+    else:
+        print(res[1])
