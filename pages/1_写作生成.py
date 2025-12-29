@@ -108,76 +108,86 @@ with col7:
 
     def outlines_generate():
         """生成大纲"""
-        if not project:
-            st.toast("请先选择项目")
-            return
-        if not model_provider_selection:
-            st.toast("请先选择模型服务商")
-            return
-        if not model_selection:
-            st.toast("请先选择模型")
-            return
-        
-        wf = NovelWorkflow(
-            project, 
-            model_selection, 
-            model_provider_selection, 
-            extractor_model_selection, 
-            short_model_selection, 
-            special_model_provider_selection, 
-            model_kwargs
-        )
-        inputs = {
-            "user_input": st.session_state.get("user_input_text"),
-            "temp_settings": st.session_state.get("temp_settings_text"),
-            "chapter_num": chapter_num,
-            "words_num": words_num,
-            "outlines_description": st.session_state.get("outlines_description_text")
-        }
-        outline_str, outline_list = wf.generate_outlines(inputs, lambda p: bar.progress(p))
-        st.session_state["outlines_generated_text"] = outline_str
-        st.session_state["outline_list"] = outline_list
-        bar.progress(100)
-        st.toast("生成完成")
-
-    def novel_generate():
-        """生成小说"""
-        if not project:
-            st.toast("请先选择项目")
-            return
-        if not model_provider_selection:
-            st.toast("请先选择模型服务商")
-            return
-        if not model_selection:
-            st.toast("请先选择模型")
-            return
-        
-        wf = NovelWorkflow(
-            project, 
-            model_selection, 
-            model_provider_selection, 
-            extractor_model_selection, 
-            short_model_selection, 
-            special_model_provider_selection, 
-            model_kwargs
-        )
-        if st.session_state.get("outlines_generated_text"):
+        try:
+            if not project:
+                st.toast("请先选择项目")
+                return
+            if not model_provider_selection:
+                st.toast("请先选择模型服务商")
+                return
+            if not model_selection:
+                st.toast("请先选择模型")
+                return
+            
+            wf = NovelWorkflow(
+                project, 
+                model_selection, 
+                model_provider_selection, 
+                extractor_model_selection, 
+                short_model_selection, 
+                special_model_provider_selection, 
+                model_kwargs
+            )
             inputs = {
                 "user_input": st.session_state.get("user_input_text"),
                 "temp_settings": st.session_state.get("temp_settings_text"),
                 "chapter_num": chapter_num,
                 "words_num": words_num,
-                "generated_outlines": st.session_state.get("outline_list") if st.session_state.get("outline_list") else st.session_state.get("outlines_generated_text", "").split("\\n\\n"),
                 "outlines_description": st.session_state.get("outlines_description_text")
             }
-            for content in wf.generate_novels(inputs, lambda p: bar.progress(p)):
-                if content:
-                    current_text = st.session_state.get("content_generated_text", "")
-                    st.session_state["content_generated_text"] = current_text + str(content) + "\\n\\n"
+            outline_str, outline_list = wf.generate_outlines(inputs, lambda p: bar.progress(p))
+            st.session_state["outlines_generated_text"] = outline_str
+            st.session_state["outline_list"] = outline_list
             bar.progress(100)
             st.toast("生成完成")
-        else:
-            st.toast("请生成或输入大纲内容")
+        except Exception as e:
+            st.error(f"生成大纲时发生错误: {e}")
+            import traceback
+            st.error(traceback.format_exc())
+
+    def novel_generate():
+        """生成小说"""
+        try:
+            if not project:
+                st.toast("请先选择项目")
+                return
+            if not model_provider_selection:
+                st.toast("请先选择模型服务商")
+                return
+            if not model_selection:
+                st.toast("请先选择模型")
+                return
+            
+            wf = NovelWorkflow(
+                project, 
+                model_selection, 
+                model_provider_selection, 
+                extractor_model_selection, 
+                short_model_selection, 
+                special_model_provider_selection, 
+                model_kwargs
+            )
+            if st.session_state.get("outlines_generated_text"):
+                inputs = {
+                    "user_input": st.session_state.get("user_input_text"),
+                    "temp_settings": st.session_state.get("temp_settings_text"),
+                    "chapter_num": chapter_num,
+                    "words_num": words_num,
+                    "generated_outlines": st.session_state.get("outline_list") if st.session_state.get("outline_list") else st.session_state.get("outlines_generated_text", "").split("\\n\\n"),
+                    "outlines_description": st.session_state.get("outlines_description_text")
+                }
+                for i, content in enumerate(wf.generate_novels(inputs, lambda p: bar.progress(p))):
+                    if content:
+                        current_text = st.session_state.get("content_generated_text", "")
+                        st.session_state["content_generated_text"] = current_text + f"## 章节{i+1}\n" + str(content) + "\\n\\n"
+                bar.progress(100)
+                st.toast("生成完成")
+            else:
+                st.toast("请生成或输入大纲内容")
+        except Exception as e:
+            st.error(f"生成小说时发生错误: {e}")
+            import traceback
+            st.error(traceback.format_exc())
 
     outlines_gen_button = st.button(
         "自动生成大纲", 
@@ -206,7 +216,9 @@ with col7:
         with col_save:
             if st.button("保存", type="primary", use_container_width=True):
                 with open(f"{wf.context_retriever.document_processor.documents_dir}/{file_name}.txt", "w", encoding="utf-8") as f:
-                    f.write(st.session_state["content_generated_text"])
+                    data = "## 大纲\n" + st.session_state["outlines_generated_text"] + "\n\n"
+                    data += "## 内容\n" + st.session_state["content_generated_text"]
+                    f.write(data)
                 st.rerun()
         with col_cancel:
             if st.button("取消", use_container_width=True):

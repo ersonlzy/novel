@@ -43,8 +43,12 @@ class NovelWorkflow:
 
     def query_single(self, retriever: Retriever, queries: list, results: dict, key: str):
         """单个检索任务"""
-        result = retriever.invoke(queries)
-        results.update({key: result})
+        try:
+            result = retriever.invoke(queries)
+            results.update({key: result})
+        except Exception as e:
+            print(f"[ERROR] 检索任务 {key} 失败: {e}")
+            results.update({key: []})
 
     def query_context(self, inputs):
         """并行检索上下文信息"""

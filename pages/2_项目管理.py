@@ -19,6 +19,8 @@ def open_folder(folder_path):
             subprocess.Popen(f'explorer "{folder_path}"')
         elif platform.system() == "Linux":
             subprocess.Popen(["xdg-open", folder_path])
+        else:
+            subprocess.Popen(["wslview", folder_path])
     except Exception as e:
         st.error(f"打开文件夹失败: {e}")
 
@@ -42,9 +44,12 @@ with col1:
 with col2:
     refresh_button = st.button("更新项目", use_container_width=True)
     if refresh_button and project:
-        wf = NovelWorkflow(project)
-        wf.update()
-        st.toast("项目更新完成")
+        try:
+            wf = NovelWorkflow(project)
+            wf.update()
+            st.toast("项目更新完成")
+        except Exception as e:
+            st.error(f"项目更新失败: {e}")
 with col3:
     delete_button = st.button("删除项目", use_container_width=True)
     if delete_button and project:
@@ -100,12 +105,15 @@ elif project:
                 label_visibility="hidden"
             )
             if files_uploaded:
-                import os
-                for file_uploaded in files_uploaded:
-                    file_bytes = file_uploaded.read()
-                    with open(os.path.join(get_config(project).project_documents, file_uploaded.name), "wb") as f:
-                        f.write(file_bytes)
-                st.info("文件已全部保存，请及时更新项目知识库")
+                try:
+                    import os
+                    for file_uploaded in files_uploaded:
+                        file_bytes = file_uploaded.read()
+                        with open(os.path.join(get_config(project).project_documents, file_uploaded.name), "wb") as f:
+                            f.write(file_bytes)
+                    st.info("文件已全部保存，请及时更新项目知识库")
+                except Exception as e:
+                    st.error(f"文件上传失败: {e}")
             
             st.subheader("文件列表")
             display_file_list_with_delete(get_config(project).project_documents, "project_documents")
@@ -128,12 +136,15 @@ elif project:
                 label_visibility="hidden"
             )
             if files_uploaded:
-                import os
-                for file_uploaded in files_uploaded:
-                    file_bytes = file_uploaded.read()
-                    with open(os.path.join(get_config(project).context_documents, file_uploaded.name), "wb") as f:
-                        f.write(file_bytes)
-                st.info("文件已全部保存，请及时更新知识库")
+                try:
+                    import os
+                    for file_uploaded in files_uploaded:
+                        file_bytes = file_uploaded.read()
+                        with open(os.path.join(get_config(project).context_documents, file_uploaded.name), "wb") as f:
+                            f.write(file_bytes)
+                    st.info("文件已全部保存，请及时更新知识库")
+                except Exception as e:
+                    st.error(f"文件上传失败: {e}")
             
             st.subheader("文件列表")
             display_file_list_with_delete(get_config(project).context_documents, "context_documents")
@@ -156,12 +167,15 @@ elif project:
                 label_visibility="hidden"
             )
             if files_uploaded:
-                import os
-                for file_uploaded in files_uploaded:
-                    file_bytes = file_uploaded.read()
-                    with open(os.path.join(get_config(project).knowledge_documents, file_uploaded.name), "wb") as f:
-                        f.write(file_bytes)
-                st.info("文件已全部保存，请及时更新知识库")
+                try:
+                    import os
+                    for file_uploaded in files_uploaded:
+                        file_bytes = file_uploaded.read()
+                        with open(os.path.join(get_config(project).knowledge_documents, file_uploaded.name), "wb") as f:
+                            f.write(file_bytes)
+                    st.info("文件已全部保存，请及时更新知识库")
+                except Exception as e:
+                    st.error(f"文件上传失败: {e}")
             
             st.subheader("文件列表")
             display_file_list_with_delete(get_config(project).knowledge_documents, "knowledge_documents")
