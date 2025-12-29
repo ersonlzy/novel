@@ -1,11 +1,15 @@
+"""
+查询提取器模块
+合并了原 components/extractors.py 和 prompts/queries_extractor.py
+"""
 from langchain_classic.output_parsers import ResponseSchema
+from llm.providers.base import LLM
 
 
-system_prompt = "你是一个知识库检索词提取器"
+# 提示词模板
+SYSTEM_PROMPT = "你是一个知识库检索词提取器"
 
-
-
-user_prompt = """
+USER_PROMPT = """
     ## 工作描述：
     你需要根据大纲内容，提取出需要检索的查询信息，以便后续从知识库中获取相关内容支持小说创作。
     
@@ -37,7 +41,7 @@ user_prompt = """
     {return_format}
 """
 
-user_input = """
+USER_INPUT = """
     ## 临时大纲设定
     {outlines_description}
     ## 临时设定
@@ -46,10 +50,26 @@ user_input = """
     {user_input}
 """
 
-schemas = [
+SCHEMAS = [
     ResponseSchema(name="outline_queries", type="list[string]", description="the list of queries of outline informations needed to be retrieved, default as []"),
     ResponseSchema(name="context_queries", type="list[string]", description="the list of queries of context informations needed to be retrieved, default as []"),
     ResponseSchema(name="knowledge_queries", type="list[string]", description="the list of queries of knowledge context informations needed to be retrieved, default as []"),
     ResponseSchema(name="character_queries", type="list[string]", description="the list of queries of character settings context informations needed to be retrieved, default as []"),
     ResponseSchema(name="equipment_queries", type="list[string]", description="the list of queries of arms, tools, weapon etc. context informations needed to be retrieved, default as []")
 ]
+
+
+class QueriesExtractor(LLM):
+    """查询提取器"""
+    
+    def __init__(self, model, model_provider, model_kwargs={}):
+        super().__init__(
+            model, 
+            model_provider, 
+            model_kwargs, 
+            SYSTEM_PROMPT, 
+            USER_PROMPT, 
+            USER_INPUT, 
+            SCHEMAS
+        )
+        self.get_chain()

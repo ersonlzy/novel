@@ -1,11 +1,15 @@
+"""
+大纲生成器模块
+合并了原 components/generators.py 中的 OutlinesGenerator 和 prompts/outline_generator.py
+"""
 from langchain_classic.output_parsers import ResponseSchema
+from llm.providers.base import LLM
 
 
-system_prompt = "你是一位专业的小说写作家"
+# 提示词模板
+SYSTEM_PROMPT = "你是一位专业的小说写作家"
 
-
-
-user_prompt = """
+USER_PROMPT = """
     ## 工作流描述
     你需要根据用户的输入的大纲描述，对当前大纲内容进行情节拆分，你**需要生成{chapter_num}个**的章节大纲。
     你需要利用各种背景知识丰富故事内容，可适当添加新的剧情，但需要保证上下文一致。
@@ -22,7 +26,7 @@ user_prompt = """
     2. 使用平易近人的语言，使用简单和通俗易懂的词汇，不要使用专业术语，使文章更加亲切和易于理解。
     3. 要使用短句，不要使用长句，不要冗长描述，便于阅读和理解。
     4. 使用口语化、接地气、人情味、富有情感的文字米描述。
-    5. 段落过度要自然、逻辑清晰。不要使用“首先、其次、再次、然后、最后”这些副词和过渡词。
+    5. 段落过度要自然、逻辑清晰。不要使用"首先、其次、再次、然后、最后"这些副词和过渡词。
     6. 你所需要生成的内容为网络小说，你可以适当使用大尺度的细节描写以增强文学艺术性。
 
     ## 返回值
@@ -31,7 +35,7 @@ user_prompt = """
     {return_format}
 """
 
-user_input = """
+USER_INPUT = """
     ## 用户要求
     {user_input}
 
@@ -54,6 +58,22 @@ user_input = """
     {equipment_settings}
 """
 
-schemas = [
+SCHEMAS = [
     ResponseSchema(name="outlines", type="list[string]", description="大纲列表"),
 ]
+
+
+class OutlinesGenerator(LLM):
+    """大纲生成器"""
+    
+    def __init__(self, model, model_provider, model_kwargs={}):  
+        super().__init__(
+            model, 
+            model_provider, 
+            model_kwargs, 
+            SYSTEM_PROMPT, 
+            USER_PROMPT, 
+            USER_INPUT, 
+            SCHEMAS
+        )
+        self.get_chain()
