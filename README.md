@@ -136,13 +136,35 @@ streamlit run main.py
 
 ## Docker 部署
 
-```bash
-# 构建镜像
-docker build -t novel-copilot .
+### Windows 一键部署（推荐）
 
-# 运行容器
-docker-compose up -d
+双击运行 `deploy.bat` 即可完成部署。
+
+详细说明请参考：[Docker 部署指南](DOCKER_DEPLOYMENT.md)
+
+### 手动部署
+
+```bash
+# 1. 配置环境变量
+cp .env.example .env
+# 编辑 .env 文件，填入你的 API 密钥
+
+# 2. 创建数据目录
+mkdir -p data/db data/vectordb data/files
+
+# 3. 启动服务
+docker compose up -d
+
+# 4. 访问应用
+# http://localhost:8501
 ```
+
+### 数据持久化
+
+所有数据都会保存在 `data/` 目录：
+- `data/db/` - SQLite 数据库
+- `data/vectordb/` - 向量数据库
+- `data/files/` - 用户上传的文件
 
 ## 架构设计
 

@@ -15,12 +15,18 @@ class Retriever():
         self.k = k
     
     def invoke(self, queries):
-        query_res = ""
+        """执行检索查询，返回合并后的结果"""
+        if not queries:
+            return ""
+        
+        query_results = []
         for query in queries:
             results = self.chain.invoke(query)[:self.k]
             for result in results:
-                query_res += f"\n{result.page_content}"
-        return query_res
+                if result.page_content.strip():
+                    query_results.append(result.page_content)
+        
+        return "\n\n".join(query_results) if query_results else ""
 
     def update(self):
         self.document_processor.update()

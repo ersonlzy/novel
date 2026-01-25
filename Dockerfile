@@ -1,34 +1,43 @@
-# Use a python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+# 使用 Python 3.12 官方镜像
+FROM python:3.12-slim
 
-# Set the working directory to /app
+# 设置工作目录
 WORKDIR /app
 
-# Enable bytecode compilation
-ENV UV_COMPILE_BYTECODE=1
+# 设置环境变量
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Copy the lockfile and pyproject.toml first to leverage cache
-COPY uv.lock pyproject.toml /app/
+# 安装系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies using uv
-# --frozen ensures we use exact versions from uv.lock
-# --no-dev excludes development dependencies if any (though usually we might want them for certain dev setups, for "others to use" we assume prod use case, but pyproject.toml structure here is simple so we just sync)
-# --no-install-project skips installing the project itself as a package (unless it is one), focused on deps first
-RUN uv sync --frozen --no-install-project --no-dev
+# 复制项目依赖文件
+COPY pyproject.toml uv.lock* ./
 
-# Copy the rest of the application code
-COPY . /app/
+# 安装 uv 包管理器
+RUN pip install uv
 
-# Install the project itself (if needed) or just ensure environment is ready
-RUN uv sync --frozen --no-dev
+# 使用 uv 安装依赖
+RUN uv pip install --system -r pyproject.toml
 
-# Expose port 8501 for Streamlit
+# 复制项目文件
+COPY . .
+
+# 创建数据目录（用于挂载卷）
+RUN mkdir -p /app/.db /app/.vectordb /app/data
+
+# 暴露 Streamlit 默认端口
 EXPOSE 8501
 
-# Set environment variables
-ENV PATH="/app/.venv/bin:$PATH"
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
-RUN chmod 777 ./
-
-# Run the application
-CMD ["uv", "run", "streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# 启动命令
+CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]

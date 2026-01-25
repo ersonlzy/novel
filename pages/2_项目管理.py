@@ -5,6 +5,7 @@
 import streamlit as st
 import subprocess
 import platform
+import os
 from config.project_config import get_projects, get_config, create_new_project, delete_project
 from core.workflows.novel_workflow import NovelWorkflow
 from app.components.file_manager import display_file_list_with_delete
@@ -13,7 +14,37 @@ from app.components.file_manager import display_file_list_with_delete
 def open_folder(folder_path):
     """打开文件夹"""
     try:
-        if platform.system() == "Darwin":  # macOS
+        # 检查是否在 Docker 容器中运行
+        docker_check = os.path.exists('/.dockerenv') or os.path.exists('/proc/1/cgroup')
+        
+        if docker_check:
+            # 检查是否在 WSL2 环境中
+            wsl_check = os.path.exists('/proc/version') and 'microsoft' in open('/proc/version').read().lower()
+            
+            if wsl_check:
+                # 尝试使用 explorer.exe 打开文件夹（Docker for Windows/WSL2）
+                try:
+                    # 读取挂载信息，获取宿主机路径
+                    # Docker for Windows 中，挂载卷通常是 /mnt/c/... 格式
+                    if folder_path.startswith('/app/data'):
+                        # 替换容器路径为 WSL2 路径
+                        wsl_path = folder_path.replace('/app/data', '/mnt/c/Users/erson/workSpace/novel/data')
+                        # 转换为 Windows 路径
+                        windows_path = subprocess.check_output(['wslpath', '-w', wsl_path], text=True).strip()
+                        # 调用 Windows explorer 打开
+                        subprocess.run(['explorer.exe', windows_path], check=True)
+                    else:
+                        # 非 data 目录的路径，直接转换
+                        wsl_path = folder_path.replace('/app', '/mnt/c/Users/erson/workSpace/novel')
+                        windows_path = subprocess.check_output(['wslpath', '-w', wsl_path], text=True).strip()
+                        subprocess.run(['explorer.exe', windows_path], check=True)
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    # 如果失败，显示提示
+                    st.info(f"🐳 Docker 环境 - 文件夹路径：`{folder_path}`\n\n请手动在文件管理器中打开此路径")
+            else:
+                # 非 WSL2 的 Docker 环境，显示提示
+                st.info(f"🐳 Docker 环境 - 文件夹路径：`{folder_path}`\n\n请手动在文件管理器中打开此路径")
+        elif platform.system() == "Darwin":  # macOS
             subprocess.Popen(["open", folder_path])
         elif platform.system() == "Windows":
             subprocess.Popen(f'explorer "{folder_path}"')
@@ -29,18 +60,33 @@ st.set_page_config(page_title="项目管理", page_icon="✏️", layout="wide")
 st.markdown("# 项目管理")
 st.sidebar.header("项目管理")
 
+# 初始化session_state中的项目选择
+if "selected_project" not in st.session_state:
+    st.session_state.selected_project = None
+
 # 项目选择和操作
 col1, col2, col3 = st.columns([1, 1, 1], vertical_alignment="bottom", gap="medium")
 
 with col1:
+    # 计算当前项目的索引
+    projects = get_projects()
+    current_index = None
+    if st.session_state.selected_project in projects:
+        current_index = projects.index(st.session_state.selected_project)
+    
     project = st.selectbox(
         "选择小说项目", 
-        options=get_projects(), 
-        index=None, 
+        options=projects, 
+        index=current_index, 
         placeholder="请选择项目", 
         accept_new_options=True, 
-        label_visibility="collapsed"
+        label_visibility="collapsed",
+        key="project_selector"
     )
+    
+    # 更新session_state中的项目选择
+    if project != st.session_state.selected_project:
+        st.session_state.selected_project = project
 with col2:
     refresh_button = st.button("更新项目", use_container_width=True)
     if refresh_button and project:

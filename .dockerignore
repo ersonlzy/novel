@@ -1,10 +1,37 @@
-.git
-.venv
-__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
-*.pyc
-.idea
-.vscode
-.gemini
-.db
-.vectordb
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# 数据文件 - 这些会通过卷挂载
+.db/
+.vectordb/
+data/
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.temp

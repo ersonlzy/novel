@@ -47,25 +47,45 @@ class LLM():
             break
         try:
             return res["content"]
-        except:
+        except (KeyError, TypeError):
             return res  
 
     def __get_llm(self, model, model_provider:str, stream=False, model_kwargs={}):
-        base_url = os.getenv(f"{model_provider.upper()}_BASE_URL", None)
-        api_key = os.getenv(f"{model_provider.upper()}_API_KEY", None)
+        """初始化LLM客户端"""
+        # 获取对应提供商的配置
+        provider_upper = model_provider.upper()
+        base_url = os.getenv(f"{provider_upper}_BASE_URL", None)
+        api_key = os.getenv(f"{provider_upper}_API_KEY", None)
+        
+        # 调试信息
+        print(f"\n==== LLM 初始化 ====")
+        print(f"提供商: {model_provider}")
+        print(f"模型: {model}")
+        print(f"Base URL: {base_url}")
+        print(f"API Key: {'已配置' if api_key and api_key != 'sk-' else '未配置或无效'}")
+        print(f"==================\n")
+        
+        # 验证配置
         if base_url is None and api_key is None:
             raise ValueError(f"Invalid model provider: {model_provider}, please check your model setting")
-        if model_provider == "ollama":
+        
+        # 根据提供商选择LLM类型
+        if model_provider.lower() == "ollama":
             _get_llm = OllamaLLM
+            return _get_llm(
+                model=model, 
+                base_url=base_url, 
+                **model_kwargs
+            )
         else:
-            model_provider = "openai"
+            # 其他提供商使用OpenAI兼容接口
             _get_llm = init_chat_model
-        return _get_llm(
-            model=model, 
-            model_provider=model_provider, 
-            base_url=base_url, 
-            api_key=api_key, 
-            disable_streaming=not stream, 
-            **model_kwargs
-        ) 
+            return _get_llm(
+                model=model, 
+                model_provider="openai",  # 使用OpenAI兼容接口
+                base_url=base_url, 
+                api_key=api_key, 
+                disable_streaming=not stream, 
+                **model_kwargs
+            ) 
 
