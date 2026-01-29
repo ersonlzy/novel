@@ -293,16 +293,53 @@ with col7:
             label_visibility="collapsed"
         )
         col_save, col_cancel = st.columns(2, gap="small")
-        wf = NovelWorkflow(project)
+        
         with col_save:
             if st.button("保存", type="primary", use_container_width=True):
-                with open(f"{wf.context_retriever.document_processor.documents_dir}/{file_name}.txt", "w", encoding="utf-8") as f:
-                    data = "## 大纲\n" + st.session_state.get("outlines_generated_text", "") + "\n\n"
-                    if st.session_state.get("detailed_outlines_generated_text"):
-                        data += "## 细纲\n" + st.session_state.get("detailed_outlines_generated_text", "") + "\n\n"
-                    data += "## 内容\n" + st.session_state.get("content_generated_text", "")
-                    f.write(data)
-                st.rerun()
+                if not file_name:
+                    st.toast("请输入文件名")
+                    return
+                
+                try:
+                    # 重新初始化 workflow 以确保路径正确
+                    wf = NovelWorkflow(project)
+                    save_dir = wf.context_retriever.document_processor.documents_dir
+                    
+                    if not os.path.exists(save_dir):
+                        os.makedirs(save_dir, exist_ok=True)
+                        
+                    file_path = os.path.join(save_dir, f"{file_name}.txt")
+                    
+                    # 安全获取内容
+                    outlines = st.session_state.get("outlines_generated_text", "")
+                    detailed_outlines = st.session_state.get("detailed_outlines_generated_text", "")
+                    content = st.session_state.get("content_generated_text", "")
+                    
+                    if not (outlines or detailed_outlines or content):
+                        st.toast("没有可保存的内容")
+                        return
+
+                    data = ""
+                    if outlines:
+                        data += "## 大纲\n" + outlines + "\n\n"
+                    if detailed_outlines:
+                        data += "## 细纲\n" + detailed_outlines + "\n\n"
+                    if content:
+                        data += "## 内容\n" + content
+                    
+                    with open(file_path, "w", encoding="utf-8") as f:
+                        f.write(data)
+                    
+                    st.toast(f"保存成功! 文件已保存至: {file_path}")
+                    import time
+                    time.sleep(1) # 给用户一点时间看到toast
+                    st.rerun()
+                    
+                except Exception as e:
+                    st.error(f"保存失败: {str(e)}")
+                    import traceback
+                    st.error(traceback.format_exc())
+
         with col_cancel:
             if st.button("取消", use_container_width=True):
                 st.rerun()

@@ -20,3 +20,5 @@ wheels/
 models/
 
 */.DS_Store
+
+*.zip

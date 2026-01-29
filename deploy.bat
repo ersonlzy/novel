@@ -40,6 +40,13 @@ echo [√] 数据目录创建完成
 REM 检查 .env 文件
 echo.
 echo [3/6] 检查环境配置...
+if exist ".env\" (
+    echo [!] 检测到 .env 是一个文件夹（可能是 Docker 错误创建的）
+    echo [!] 正在删除该文件夹并从 .env.example 重新创建...
+    rmdir /s /q ".env"
+    copy ".env.example" ".env" >nul
+)
+
 if not exist ".env" (
     echo [!] 未找到 .env 文件，从 .env.example 复制...
     copy ".env.example" ".env" >nul
@@ -58,13 +65,14 @@ if not exist ".env" (
 REM 停止并删除旧容器（如果存在）
 echo.
 echo [4/6] 清理旧容器...
-docker compose down >nul 2>&1
+echo [4/6] 清理旧容器和镜像...
+docker compose down --rmi local >nul 2>&1
 echo [√] 旧容器已清理
 
 REM 构建并启动服务
 echo.
 echo [5/6] 构建 Docker 镜像...
-docker compose build
+docker compose build --no-cache
 if errorlevel 1 (
     echo [错误] Docker 镜像构建失败
     pause

@@ -11,7 +11,7 @@ import streamlit as st
 class DocumentProcessor():
     
     def __init__(self, knowledge_base_path):
-        self.embeddings = OllamaEmbeddings(model="qwen3-embedding:8b", base_url=os.getenv("OLLAMA_BASE_URL"))
+        self.embeddings = OllamaEmbeddings(model="qwen3-embedding:0.6b", base_url=os.getenv("OLLAMA_BASE_URL"))
         
         self.collection_name = knowledge_base_path.split("/")[-1]
         self.project_name = knowledge_base_path.split("/")[-2]

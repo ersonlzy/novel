@@ -24,7 +24,8 @@ COPY pyproject.toml uv.lock* ./
 RUN pip install uv
 
 # 使用 uv 安装依赖
-RUN uv pip install --system -r pyproject.toml
+# 使用 uv 安装依赖 (创建 venv)
+RUN uv sync --frozen
 
 # 复制项目文件
 COPY . .
@@ -40,4 +41,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
 # 启动命令
-CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# 验证 streamlit
+RUN uv run streamlit --version
+
+# 使用 uv run 启动
+CMD ["uv", "run", "streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]

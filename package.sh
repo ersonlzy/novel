@@ -67,6 +67,8 @@ cp logs.bat "$TEMP_DIR/" 2>/dev/null || true
 echo "复制文档..."
 cp README.md "$TEMP_DIR/" 2>/dev/null || true
 cp DOCKER_DEPLOYMENT.md "$TEMP_DIR/" 2>/dev/null || true
+cp CLIENT_DEPLOYMENT_GUIDE.md "$TEMP_DIR/" 2>/dev/null || true
+cp PACKAGE_MANIFEST.md "$TEMP_DIR/" 2>/dev/null || true
 
 # 创建空的数据目录结构
 mkdir -p "$TEMP_DIR/data/db"
