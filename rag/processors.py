@@ -8,10 +8,30 @@ import os
 from tqdm import tqdm
 import streamlit as st
 
+from langchain_core.embeddings import Embeddings
+
 class DocumentProcessor():
     
     def __init__(self, knowledge_base_path):
-        self.embeddings = OllamaEmbeddings(model="qwen3-embedding:0.6b", base_url=os.getenv("OLLAMA_BASE_URL"))
+        self.embeddings: Embeddings
+        # 获取默认嵌入模型配置
+        emb_provider = os.getenv("DEFAULT_EMBEDDING_PROVIDER", "OLLAMA").upper()
+        emb_model = os.getenv("DEFAULT_EMBEDDING_MODEL", "qwen3-embedding:0.6b")
+        
+        if emb_provider == "OLLAMA":
+            self.embeddings = OllamaEmbeddings(model=emb_model, base_url=os.getenv("OLLAMA_BASE_URL"))
+        else:
+            # 其他提供商通常使用 OpenAI 兼容 API
+            # 注意：langchain_openai.OpenAIEmbeddings 默认使用 OPENAI_API_KEY 等
+            # 如果是其他厂商，需要手动指定 base_url 和 api_key
+            api_key = os.getenv(f"{emb_provider}_API_KEY")
+            base_url = os.getenv(f"{emb_provider}_BASE_URL")
+            self.embeddings = OpenAIEmbeddings(
+                model=emb_model, 
+                api_key=api_key, 
+                base_url=base_url,
+                check_embedding_ctx_length=False # 防止某些非OpenAI模型的长度检查错误
+            )
         self.collection_name = knowledge_base_path.split("/")[-1]
         self.project_name = knowledge_base_path.split("/")[-2]
         self.sql_url = f"sqlite:///.db/{self.project_name}_{self.collection_name}_record_manager.db"

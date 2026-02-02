@@ -164,7 +164,7 @@ class NovelWorkflow:
         progress_lock = Lock()
         
         # 准备结果列表，先用None填充
-        all_detailed_outlines = [None] * total_chapters
+        all_detailed_outlines: list[dict | None] = [None] * total_chapters
         
         # 使用线程池并行生成
         # 限制最大并发数为 5，避免触发 API 限制

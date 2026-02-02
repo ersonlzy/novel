@@ -10,8 +10,12 @@ class Retriever():
     def __init__(self, documents, k=1, query_rewriter=None):
         self.document_processor = DocumentProcessor(documents)
         self.base_retriever = self.document_processor.get_Chroma().as_retriever(search_type="mmr",kwargs={"k": 5})
-        self.reranker = CohereRerank(cohere_api_key=os.getenv("SILICONFLOW_API_KEY"), base_url=os.getenv("SILICONFLOW_BASE_URL"), model="BAAI/bge-reranker-v2-m3")
-        self.chain = ContextualCompressionRetriever(base_compressor=self.reranker, base_retriever=self.base_retriever)
+        self.reranker = CohereRerank(
+            cohere_api_key=os.getenv("SILICONFLOW_API_KEY"), 
+            base_url=os.getenv("SILICONFLOW_BASE_URL"), 
+            model=os.getenv("DEFAULT_RERANKER_MODEL", "BAAI/bge-reranker-v2-m3")
+        )
+        self.chain = ContextualCompressionRetriever(base_compressor=self.reranker, base_retriever=self.base_retriever) # type: ignore
         self.k = k
         self.query_rewriter = query_rewriter
     
