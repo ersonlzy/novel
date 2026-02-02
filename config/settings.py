@@ -10,6 +10,7 @@ def get_model_list(model_provider: str, type="text", sub_type="chat"):
     """获取模型列表"""
     base_url = os.getenv(f"{model_provider.upper()}_BASE_URL")
     api_key = os.getenv(f"{model_provider.upper()}_API_KEY")
+    print(base_url, api_key)
     
     # 验证环境变量是否设置
     if not base_url:

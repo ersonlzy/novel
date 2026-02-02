@@ -34,7 +34,7 @@ services:
       - ZHIPUAI_API_KEY=${ZHIPUAI_API_KEY}
     # 使用 uv run 启动
     command: uv run streamlit run main.py --server.port=8501 --server.address=0.0.0.0
-    restart: unless-stopped
+    restart: always
     networks:
       - novel-network
 
