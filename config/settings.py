@@ -19,12 +19,13 @@ def get_model_list(model_provider: str, type="text", sub_type="chat"):
         return False, f"[ERROR] 未找到环境变量 {model_provider.upper()}_API_KEY，请检查 .env 配置文件"
     
     if model_provider.upper() == "OLLAMA":
-        url = f"{base_url}/v1/models"
+        url = f"{base_url.rstrip('/')}/v1/models"
     else:
-        url = f"{base_url}/models"
-    querystring = {"type": type, "sub_type": sub_type}
+        url = f"{base_url.rstrip('/')}/models"
+    # querystring = {"type": type, "sub_type": sub_type}
     headers = {"Authorization": f"Bearer {api_key}"}
-    response = requests.get(url, headers=headers, params=querystring)
+    # reponse = requests.get(url, headers=headers, params=querystring)
+    response = requests.get(url, headers=headers)
     if response.status_code != 200:
         return False, f"[ERROR] Encounter error {response.status_code} while get model list"
     try:

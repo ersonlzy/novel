@@ -85,7 +85,7 @@ echo "[√] Cleanup complete"
 # 6. Build and start services
 echo ""
 echo "[6/7] Building Docker image..."
-$DOCKER_COMPOSE_CMD build --no-cache
+$DOCKER_COMPOSE_CMD build
 if [ $? -ne 0 ]; then
     echo "[Error] Docker image build failed"
     exit 1
