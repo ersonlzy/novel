@@ -93,13 +93,24 @@ class DocumentProcessor():
             except Exception as e:
                 st.toast(f"Processing encounter error with file {document}\nplease check the file is valid and its format.\n[Error] {e}")
         
+        # 确保 self.chroma 已初始化
+        if not hasattr(self, 'chroma'):
+            self.chroma = Chroma(
+                collection_name=self.collection_name, 
+                persist_directory=f".vectordb/{self.knowledge_base_path}/", 
+                embedding_function=self.embeddings
+            )
+
         try:
             result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
+            st.toast(f"知识库更新成功\n新增知识块：{result['num_added']}\n删除知识块：{result['num_deleted']}\n更新知识块：{result['num_updated']}")
         except Exception as e:
             try:
+                # 尝试重新创建（如果上面的更新失败）
+                # 注意：Chroma.from_documents 会创建新的实例并持久化
                 self.chroma = Chroma.from_documents(all_contents, self.embeddings, persist_directory=f".vectordb/{self.knowledge_base_path}/", collection_name=self.collection_name )
                 result = index(all_contents, self.record_manager, self.chroma, cleanup="incremental", source_id_key='source')
-                st.toast(f"知识库更新成功\n新增知识块：{result['num_added']}\n删除知识块：{result['num_deleted']}\n更新知识块：{result['num_updated']}")
+                st.toast(f"知识库重建并更新成功\n新增知识块：{result['num_added']}\n删除知识块：{result['num_deleted']}\n更新知识块：{result['num_updated']}")
                 st.toast(f"Processor has persisted all documents in path {self.knowledge_base_path}")
                 st.toast(f"知识库{self.collection_name}处理成功")
             except Exception as e:
