@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv, set_key
 import shutil
+from config.settings import get_model_list
 
 st.set_page_config(page_title="系统设置", page_icon="⚙️", layout="wide")
 st.markdown("# 系统设置")
@@ -48,6 +49,14 @@ def load_env_config():
         for provider in LLM_PROVIDERS.keys():
             config[f'{provider}_BASE_URL'] = os.getenv(f'{provider}_BASE_URL', '')
             config[f'{provider}_API_KEY'] = os.getenv(f'{provider}_API_KEY', '')
+
+        # 读取嵌入模型配置
+        config['DEFAULT_EMBEDDING_PROVIDER'] = os.getenv('DEFAULT_EMBEDDING_PROVIDER', '')
+        config['DEFAULT_EMBEDDING_MODEL'] = os.getenv('DEFAULT_EMBEDDING_MODEL', '')
+
+        # 读取重排序模型配置
+        config['DEFAULT_RERANKER_PROVIDER'] = os.getenv('DEFAULT_RERANKER_PROVIDER', '')
+        config['DEFAULT_RERANKER_MODEL'] = os.getenv('DEFAULT_RERANKER_MODEL', '')
     
     return config
 
@@ -97,7 +106,7 @@ def validate_api_key(api_key, provider):
 current_config = load_env_config()
 
 # 创建Tab页
-tab1, tab2 = st.tabs(["生成参数配置", "模型API配置"])
+tab1, tab2, tab3 = st.tabs(["生成参数配置", "模型API配置", "默认模型配置"])
 
 # Tab 1: 生成参数配置
 with tab1:
@@ -213,6 +222,150 @@ with tab2:
                 st.info("⚠️ 请刷新页面查看更改")
             else:
                 st.error(".env.example 文件不存在")
+
+# Tab 3: 默认模型配置
+with tab3:
+    st.markdown("### 默认嵌入模型配置")
+    st.info("配置系统默认使用的嵌入模型（Embedding Model），用于知识库检索等功能。")
+
+    # 嵌入模型提供商选择
+    embedding_provider_options = [""] + list(LLM_PROVIDERS.keys())
+    # 尝试获取当前的 provider，如果不在选项中则默认为空
+    current_emb_provider = current_config.get('DEFAULT_EMBEDDING_PROVIDER', '')
+    if current_emb_provider not in embedding_provider_options:
+        current_emb_provider = ""
+        
+    embedding_provider = st.selectbox(
+        "选择嵌入模型提供商",
+        options=embedding_provider_options,
+        format_func=lambda x: LLM_PROVIDERS[x]['name'] if x in LLM_PROVIDERS else "未选择",
+        index=embedding_provider_options.index(current_emb_provider) if current_emb_provider in embedding_provider_options else 0
+    )
+
+    # 模型选择
+    embedding_model = current_config.get('DEFAULT_EMBEDDING_MODEL', '')
+    model_options = [embedding_model] if embedding_model else []
+    
+    # 如果选择了提供商，尝试获取模型列表
+    if embedding_provider:
+        # 检查该提供商是否已配置 API Key / URL
+        provider_base_url = current_config.get(f"{embedding_provider}_BASE_URL")
+        provider_api_key = current_config.get(f"{embedding_provider}_API_KEY")
+        
+        # 简单的预检查，确保有配置才去请求
+        if (embedding_provider == "OLLAMA" and provider_base_url) or (provider_api_key):
+             with st.spinner(f"正在获取 {LLM_PROVIDERS[embedding_provider]['name']} 的模型列表..."):
+                # 注意：这里假设 get_model_list 能正确处理 embedding 类型，或者我们获取所有模型后过滤
+                # 通常 embedding 模型会有特定的标识，或者我们可以让用户自己输入如果获取失败
+                # 暂时尝试获取 text/chat 类型，因为某些 API 可能不严格区分，或者我们传递 type="embedding"
+                # 根据 config/settings.py 的定义：get_model_list(model_provider, type="text", sub_type="chat")
+                # 我们尝试传 type="embedding"
+                success, models = get_model_list(embedding_provider, type="all", sub_type="") 
+                
+                if success:
+                     # 简单的过滤逻辑，如果能区分的话。目前简单列出所有或者是包含 'embedding' 的
+                     # 这里先列出所有获取到的模型，让用户选择
+                     model_options = models
+                else:
+                    st.warning(f"获取模型列表失败: {models}")
+                    # 如果获取失败，允许手动输入，保留当前值
+    
+    # 使用 text_input 配合 datalist (streamlit 没有原生 datalist，用 selectbox + text_input 模拟或者直接 selectbox 可编辑模式 - st.selectbox 不支持编辑)
+    # 为了灵活性，如果获取列表失败，我们应该允许用户手动输入。
+    # Streamlit 的 selectbox 只有在 options 列表里才能选。
+    # 我们可以用一个 checkbox "手动输入模型名称" 来切换
+    
+    use_manual_input = st.checkbox("手动输入模型名称", value=not bool(model_options) and bool(embedding_model))
+    
+    if use_manual_input:
+        embedding_model_input = st.text_input(
+            "嵌入模型名称",
+            value=embedding_model,
+            help="输入模型名称，例如: text-embedding-3-small"
+        )
+    else:
+        # 确保当前值在选项中
+        # model_options 应该是列表，如果 get_model_list 失败返回 False (bool)，我们需要确保它是列表
+        if not isinstance(model_options, list):
+             model_options = [embedding_model] if embedding_model else []
+             
+        if embedding_model and embedding_model not in model_options:
+            model_options.append(embedding_model)
+            
+        embedding_model_input = st.selectbox(
+            "选择嵌入模型",
+            options=model_options,
+            index=model_options.index(embedding_model) if embedding_model in model_options else 0 if model_options else None
+        )
+
+    st.markdown("---")
+    st.markdown("### 默认重排序模型配置")
+    st.info("配置系统默认使用的重排序模型（Reranker Model），用于优化知识库检索结果。")
+
+    # 重排序模型提供商选择
+    reranker_provider_options = [""] + list(LLM_PROVIDERS.keys())
+    current_reranker_provider = current_config.get('DEFAULT_RERANKER_PROVIDER', '')
+    if current_reranker_provider not in reranker_provider_options:
+        current_reranker_provider = ""
+        
+    reranker_provider = st.selectbox(
+        "选择重排序模型提供商",
+        options=reranker_provider_options,
+        format_func=lambda x: LLM_PROVIDERS[x]['name'] if x in LLM_PROVIDERS else "未选择",
+        index=reranker_provider_options.index(current_reranker_provider) if current_reranker_provider in reranker_provider_options else 0
+    )
+
+    # 模型选择
+    reranker_model = current_config.get('DEFAULT_RERANKER_MODEL', '')
+    reranker_model_options = [reranker_model] if reranker_model else []
+    
+    if reranker_provider:
+        provider_base_url = current_config.get(f"{reranker_provider}_BASE_URL")
+        provider_api_key = current_config.get(f"{reranker_provider}_API_KEY")
+        
+        if (reranker_provider == "OLLAMA" and provider_base_url) or (provider_api_key):
+             # 尝试获取模型，对于 rerank，有些厂商可能有特定标识，这里暂时也用 all
+             with st.spinner(f"正在获取 {LLM_PROVIDERS[reranker_provider]['name']} 的模型列表..."):
+                success, models = get_model_list(reranker_provider, type="all", sub_type="") 
+                if success:
+                     reranker_model_options = models
+                else:
+                    st.warning(f"获取模型列表失败: {models}")
+    
+    use_manual_input_reranker = st.checkbox("手动输入重排序模型名称", value=not bool(reranker_model_options) and bool(reranker_model))
+    
+    if use_manual_input_reranker:
+        reranker_model_input = st.text_input(
+            "重排序模型名称",
+            value=reranker_model,
+            help="输入模型名称，例如: bge-reranker-v2-m3"
+        )
+    else:
+        if not isinstance(reranker_model_options, list):
+             reranker_model_options = [reranker_model] if reranker_model else []
+             
+        if reranker_model and reranker_model not in reranker_model_options:
+            reranker_model_options.append(reranker_model)
+            
+        reranker_model_input = st.selectbox(
+            "选择重排序模型",
+            options=reranker_model_options,
+            index=reranker_model_options.index(reranker_model) if reranker_model in reranker_model_options else 0 if reranker_model_options else None
+        )
+
+    if st.button("保存默认模型配置", key="save_default_model", type="primary"):
+        config_to_save = current_config.copy()
+        config_to_save['DEFAULT_EMBEDDING_PROVIDER'] = str(embedding_provider) if embedding_provider else ""
+        config_to_save['DEFAULT_EMBEDDING_MODEL'] = str(embedding_model_input) if embedding_model_input else ""
+        config_to_save['DEFAULT_RERANKER_PROVIDER'] = str(reranker_provider) if reranker_provider else ""
+        config_to_save['DEFAULT_RERANKER_MODEL'] = str(reranker_model_input) if reranker_model_input else ""
+        
+        success, message = save_env_config(config_to_save)
+        if success:
+            st.success(message)
+            st.info("配置已保存")
+        else:
+            st.error(message)
 
 # 底部信息
 st.markdown("---")
