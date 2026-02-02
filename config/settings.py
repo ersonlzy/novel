@@ -27,12 +27,25 @@ def get_model_list(model_provider: str, type="text", sub_type="chat"):
     response = requests.get(url, headers=headers, params=querystring)
     if response.status_code != 200:
         return False, f"[ERROR] Encounter error {response.status_code} while get model list"
-    res = response.json()["data"]
-    print(res)
-    model_list = []
-    for data in res:
-        if data["object"] == "model":
-            model_list.append(data["id"])
+    try:
+        json_data = response.json()
+        if "data" in json_data:
+             res = json_data["data"]
         else:
-            pass
-    return True, model_list
+             # 有些 API 可能直接返回列表，或者结构不同
+             res = json_data
+             
+        print(f"Model List Response: {res}")
+        
+        if not isinstance(res, list):
+             return False, f"[ERROR] Unexpected response format: {res}"
+
+        model_list = []
+        for data in res:
+            if isinstance(data, dict) and "id" in data:
+                 model_list.append(data["id"])
+            elif isinstance(data, str):
+                 model_list.append(data)
+        return True, model_list
+    except Exception as e:
+         return False, f"[ERROR] Failed to parse response: {e}"
