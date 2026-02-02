@@ -16,7 +16,7 @@ services:
       # 用户上传的数据文件
       - ./data/files:/app/data
       # 环境配置文件
-      - ./.env:/app/.env
+      # - ./.env:/app/.env
     environment:
       # 从环境变量读取配置
       - MAX_GENERATE_NUM=${MAX_GENERATE_NUM:-10}
